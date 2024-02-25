@@ -17,14 +17,14 @@ extension Color {
     }
 }
 
-func calculateColorSimilarity(color1: Color, color2: Color) -> CGFloat {
-    let distance = calculateEuclideanDistance(color1: color1, color2: color2)
+func getSimilarity(color1: Color, color2: Color) -> Double {
+    let distance = euclideanDistance(color1: color1, color2: color2)
     let similarity = 100.0 * (1.0 - distance)
-    return max(0.0, similarity) // Ensure similarity is not negative
+    return max(0.0, similarity)
 }
 
-// Function to calculate Euclidean distance between two colors
-func calculateEuclideanDistance(color1: Color, color2: Color) -> CGFloat {
+
+func euclideanDistance(color1: Color, color2: Color) -> Double {
     let components1 = color1.cgColor?.components
     let components2 = color2.cgColor?.components
     
@@ -38,7 +38,7 @@ func calculateEuclideanDistance(color1: Color, color2: Color) -> CGFloat {
 }
 
 
-func displayP3TosRGB(color: Color) -> Color {
+func P3TosRGB(color: Color) -> Color {
     
     let newColor = color.cgColor!.converted(to: CGColorSpace(name: CGColorSpace.sRGB)!, intent: .defaultIntent, options: nil)!
     
@@ -46,60 +46,12 @@ func displayP3TosRGB(color: Color) -> Color {
 }
 
 
-func normalize (perc: CGFloat) ->  CGFloat {
-    
-    var res = perc
-    
-    if(perc>100){
-        res = 100-(perc-100)
-    }else if(perc.isNaN){
-        res=100
-    }
-    
-    return res
-}
 
-func getAccuracy(color: Color, myColor: Color)-> CGFloat {
-  
-    let myRed =  (myColor.cgColor?.components![0])!
-    let red = (color.cgColor?.components![0])!
-    //print("red:\(myRed)-\(red)")
-    
-    let myGreen = (myColor.cgColor?.components![1])!
-    let green = (color.cgColor?.components![1])!
-    
-    let myBlue = (myColor.cgColor?.components![2])!
-    let blue = (color.cgColor?.components![2])!
-    
-    var redPerc = round((100 * myRed)/red)
-    var greenPerc = round((100 * myGreen)/green)
-    var bluePerc = round((100 * myBlue)/blue)
-    
-    
-    
-   
-    //valori strani se mio valore > valore vero
-    //se valore mio = 0 da accuratezza 0%
-    //se valore vero = 0 da infinito
-    // se 0/0 da nan
-    //print("pre norm ->red:\(redPerc)% green:\(greenPerc)% blue:\(bluePerc)%")
-    
-    redPerc=normalize(perc: redPerc)
-    greenPerc=normalize(perc: greenPerc)
-    bluePerc=normalize(perc: bluePerc)
-    
-    
-    //print("after norm ->red:\(redPerc)% green:\(greenPerc)% blue:\(bluePerc)%")
-    
-    let finalPercentage = (redPerc+greenPerc+bluePerc)/3
-    return finalPercentage
-    
-}
 
 struct MainView: View {
-
-    @State private var col = Color.black
-    @State private var myCol = Color.black
+    
+    @State private var trueColor = Color.black
+    @State private var myColor = Color.black
     @State private var percentage = 0.0
     @State private var submitted = false
     
@@ -109,13 +61,13 @@ struct MainView: View {
                 Spacer()
                 Button(action: {
                     
-                    col = Color.random
+                    trueColor = Color.random
                     submitted=false
-                    myCol=Color.black
+                    myColor=Color.black
                     
-
+                    
                 }, label: {
-                    Text("Generate new")
+                    Text("New color")
                         .font(.largeTitle)
                 })
                 
@@ -124,27 +76,27 @@ struct MainView: View {
                     Spacer()
                     Rectangle()
                         .frame(width: geometry.size.width * 0.35, height: geometry.size.width * 0.35)
-                        .foregroundStyle(col)
-                    .clipShape(.rect(cornerRadius: 15))
-                    .contextMenu(ContextMenu(menuItems: {
-                        Text("r:\(Int((col.cgColor?.components![0])!*255)) g:\(Int((col.cgColor?.components![1])!*255)) b:\(Int((col.cgColor?.components![2])!*255))")
-                    }))
-
-                    Spacer()
-                    
-                        Rectangle()
-                        .frame(width: geometry.size.width * 0.35, height: geometry.size.width * 0.35)
-                            .foregroundStyle(myCol)
+                        .foregroundStyle(trueColor)
                         .clipShape(.rect(cornerRadius: 15))
                         .contextMenu(ContextMenu(menuItems: {
-                            Text("r:\(Int((myCol.cgColor?.components![0])!*255)) g:\(Int((myCol.cgColor?.components![1])!*255)) b:\(Int((myCol.cgColor?.components![2])!*255))")
+                            Text("r:\(Int((trueColor.cgColor?.components![0])!*255)) g:\(Int((trueColor.cgColor?.components![1])!*255)) b:\(Int((trueColor.cgColor?.components![2])!*255))")
+                        }))
+                    
+                    Spacer()
+                    
+                    Rectangle()
+                        .frame(width: geometry.size.width * 0.35, height: geometry.size.width * 0.35)
+                        .foregroundStyle(myColor)
+                        .clipShape(.rect(cornerRadius: 15))
+                        .contextMenu(ContextMenu(menuItems: {
+                            Text("r:\(Int((myColor.cgColor?.components![0])!*255)) g:\(Int((myColor.cgColor?.components![1])!*255)) b:\(Int((myColor.cgColor?.components![2])!*255))")
                         }))
                     Spacer()
                 }
                 
                 Spacer()
                 
-                ColorPicker("Try to match", selection: $myCol, supportsOpacity: false)
+                ColorPicker("Try to match", selection: $myColor, supportsOpacity: false)
                     .labelsHidden()
                     .pickerStyle(.wheel)
                 
@@ -152,31 +104,13 @@ struct MainView: View {
                 
                 Button(action: {
                     
-                   
-//                    let resolved = col.cgColor?.components
-//                    print("real:\(resolved!)")
-//                    
-//                    let myResolved = myCol.cgColor?.components
-//                    print("mine:\(myResolved!)")
-                    if(myCol.cgColor?.colorSpace?.name==CGColorSpace.sRGB){
-                        print("rgb")
-                        let newCol=displayP3TosRGB(color: col)
-//                        percentage = getAccuracy(color: newCol, myColor: myCol)
-//                        
-//                         let resolved = col.cgColor?.components
-//                         print("real:\(resolved!)")
-                        percentage=calculateColorSimilarity(color1: newCol, color2: myCol)
+                    if(myColor.cgColor?.colorSpace?.name==CGColorSpace.sRGB){
+                        let newCol=P3TosRGB(color: trueColor)
+                        percentage=getSimilarity(color1: newCol, color2: myColor)
                     }else{
-                        print("DisplayP3")
-                        let newMyCol=displayP3TosRGB(color: myCol)
-//                        percentage = getAccuracy(color: col, myColor: newMyCol)
-//                        
-//                        let resolved = newMyCol.cgColor?.components
-//                        print("real:\(resolved!)")
-                        percentage=calculateColorSimilarity(color1: col, color2: newMyCol)
-                       
+                        let newMyCol=P3TosRGB(color: myColor)
+                        percentage=getSimilarity(color1: trueColor, color2: newMyCol)
                     }
-
                     
                     submitted=true
                     
@@ -189,7 +123,7 @@ struct MainView: View {
                 
                 if(submitted){
                     Text("You were \(String(format: "%.2f", percentage))% accurate")
-                                        .font(.largeTitle)
+                        .font(.largeTitle)
                 }
                 
                 Spacer()

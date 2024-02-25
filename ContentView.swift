@@ -4,7 +4,10 @@ struct ContentView: View {
     @State private var next = false
     var body: some View {
         NavigationStack {
-            VStack {
+            ZStack {
+               
+                Image("background")
+               
                 Button {
                     next=true
                 } label: {
@@ -17,4 +20,8 @@ struct ContentView: View {
         }
         }
     }
+}
+
+#Preview {
+    ContentView()
 }

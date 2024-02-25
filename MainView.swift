@@ -120,7 +120,6 @@ struct MainView: View {
                 })
                 
                 Spacer()
-                
                 if(submitted){
                     Text("You were \(String(format: "%.2f", percentage))% accurate")
                         .font(.largeTitle)
